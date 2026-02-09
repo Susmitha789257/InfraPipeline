@@ -11,7 +11,7 @@ pipeline {
     stage('Checkout') {
       steps {
         cleanWs()
-        git branch: "${env.BRANCH_NAME}", 
+        git branch: "${env.BRANCH_NAME}",
             url: 'https://github.com/Susmitha789257/InfraPipeline.git'
       }
     }
@@ -19,10 +19,11 @@ pipeline {
     stage('Terraform Init') {
       steps {
         dir("${TF_WORKDIR}") {
-          withCredentials([[
-            $class: 'AmazonWebServicesCredentialsBinding',
-            credentialsId: 'aws-creds'
-          ]]) {
+          withCredentials([aws(
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            credentialsId: 'aws-creds',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+          )]) {
             sh 'terraform init -input=false'
           }
         }
@@ -32,10 +33,11 @@ pipeline {
     stage('Terraform Plan') {
       steps {
         dir("${TF_WORKDIR}") {
-          withCredentials([[
-            $class: 'AmazonWebServicesCredentialsBinding',
-            credentialsId: 'aws-creds'
-          ]]) {
+          withCredentials([aws(
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            credentialsId: 'aws-creds',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+          )]) {
             sh 'terraform plan -out=tfplan -input=false'
             sh 'terraform show -no-color tfplan > tfplan.txt'
             sh 'cat tfplan.txt'
@@ -56,10 +58,11 @@ pipeline {
     stage('Terraform Apply') {
       steps {
         dir("${TF_WORKDIR}") {
-          withCredentials([[
-            $class: 'AmazonWebServicesCredentialsBinding',
-            credentialsId: 'aws-creds'
-          ]]) {
+          withCredentials([aws(
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            credentialsId: 'aws-creds',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+          )]) {
             script {
               if (env.BRANCH_NAME == 'production') {
                 sh 'terraform apply tfplan'
